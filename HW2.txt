@@ -1,0 +1,596 @@
+global _start                      ; делаем метку метку _start видимой извне
+ 
+section .data                      ; секция данных
+    messageHello db  "Hello select program 1-summ, 2-worold ",37 ; стартовая строка
+    lenMesHello equ $ - messageHello    ; длина стартовой строки
+    messageSelectMode db  "Pleas enter 1 or 2 ",28 ; строка выбора режима работы (разворот строки или калькулятор)
+    lenSelectMode equ $ - messageSelectMode    ; длина сообщения Приветствия
+    messegSelectFlip db "Do you want to flip the String? Enter the 'Y' or 'N'" , 35 ; Стрпока подтверждения выбора 
+    messegSelectCalc db "Do you want use calculator? Enter 'Y' or 'N'" , 100 ; Стрпока подтверждения выбора 
+    messegCalcEnterNum1 db "Enter two numbers, both numbers must not exceed 65535 (dw)" , 100 ; Стрпока подтверждения выбора 
+    messegCalcEnterNum2 db "after entering the number, Enter the '/'" , 100 ; Стрпока подтверждения выбора 
+    massegErrNum db "ERROR!!! You didn't enter a number. !!!",100
+    messegStartEnterNumA db "write num A", 100
+    messegStartEnterNumB db "write num B", 100
+    messegSumAandB db "A + B = ", 100
+
+    massegRulsEnterStr1 db "Line entry rules:", 100                     ; Первая строка правил ввода 
+    massegRulsEnterStr2 db "   - maximum character length - 100", 100   ; вторая строка правил ввода 
+    massegRulsEnterStr3 db "   - at the end of the input, click ENTER", 100 ; третья строка правил ввода 
+    prEnter db 13               ; символ ASCII "ENTER" 
+    readMesseg  db 100 dup(0)   ; массив для хранения прочитаных данных
+    readNumA db 10 dup(0)   ; массив для хранения прочитаных данных
+    readNumB db 10 dup(0)   ; массив для хранения прочитаных данных
+    numA dd 0 ;                  ; первое число для сложения
+    numB dd 0 ;                  ; второе число для сложения
+    count dd 0                   ; обьявляем переменную - счетчик
+    tempData db 0
+    countA db 0;
+    countB db 0;
+
+
+
+section .text                      ; объявление секции кода
+_start:                            ; точка входа в программу
+
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, messageHello          ; адрес строки для вывод строик приветствия
+    mov rdx, 37                    ; количество вывдимых байтов
+    syscall                        ; выполняем системный вызов write
+    call printEnter                ; вызов функции
+
+    call selectMode                 ; вызов функции выбора режима
+    call printEnter                 ; вызов функции
+    call readNum                    ; вызов функции
+
+
+;    mov rax, 1
+ ;   mov rdi, 1
+;    mov rsi, numA
+;    mov rdx, 4
+;    syscall
+    
+;    mov rax, 1
+ ;   mov rdi, 1
+ ;   mov rsi, message
+ ;   mov rdx, length
+;    syscall
+
+    mov rax, 60                    ; 60 - номер системного вызова exit
+    syscall                        ; выполняем системный вызов exit
+
+readNum:
+
+
+    
+ret
+
+
+
+; функция выбора режима
+; для выбора режима надо ввисти число 1 или 2
+selectMode:
+
+    call printEnter                 ; вызов функции
+
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, messageSelectMode     ; адрес строки для вывод
+    mov rdx, 18                    ; количество байтов
+    syscall                        ; выполняем системный вызов write
+
+    call printEnter                ; вызов функции вывода "ENTER"
+
+    mov rax, 0                     ; 0 - номер системного вызова функции read
+    mov rdi, 0                     ; 0 - дескриптор файла стандартного вызова stdout
+    mov rsi, readMesseg            ; адрес строки для вывод
+    mov rdx, 1                     ; количество вводимых байтов
+    syscall 
+
+    mov rax, 1                      ; 1 - номер системного вызова функции write
+    mov rdi, 1                      ; 1 - дескриптор файла стандартного вызова stdout
+ ;   mov rsi, messegSelectFlip       ; вывод сообщения "Подтверждение выбора режима разворота строки "
+    mov rdx, 1                     ; длина строки
+    syscall
+
+    ; сравнение того что ввели с 1 или 2
+    mov rax, '2'                ; с чем сравниваем
+    mov rbx, [readMesseg]       ; что сравниваем
+    cmp rax, rbx                ; сравнение
+    je SelectFlipString         ; если есть флаг совпадения переходим к функции разворота строки 
+
+        ; сравнение того что ввели с 1 или 2
+    mov rax, '1'                ; с чем сравниваем
+    mov rbx, [readMesseg]       ; что сравниваем
+    cmp rax, rbx                ; сравнение
+    je SelectCalculator        ; если есть флаг совпадения переходим к функции разворота строки 
+    jmp selectMode              ; обратно к выбору режима
+
+ ret
+
+; Подтверждение выбора режима калькулятора 
+SelectCalculator:
+    mov rax, 1                      ; 1 - номер системного вызова функции write
+    mov rdi, 1                      ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, messegSelectCalc       ; вывод сообщения "Подтверждение выбора режима разворота строки "
+    mov rdx, 48                     ; длина строки
+    syscall
+
+    mov rax, 0                     ; 0 - номер системного вызова функции read
+    mov rdi, 0                     ; 0 - дескриптор файла стандартного вызова stdout
+    mov rsi, readMesseg            ; адрес строки для вывод
+    mov rdx, 1                     ; количество считываемых байтов
+    syscall 
+
+    call printEnter                 ; вызов функции
+    
+    ; Если ввели символ Y –Yes значит переходим к функции разворота стоки
+    mov rax, 'Y'                    ; 
+    mov rbx, [readMesseg]           ; передаем введеный символ
+    cmp rax, rbx                    ; сравниваем символы
+    je enterStringForCalculator           ; переход к развороту строки при совпадении
+    jmp selectMode                  ; иначе переход к выбору режима 
+
+
+ret
+
+
+enterStringForCalculator:
+
+    call printEnter                ; вызов функции вывода "ENTER"
+
+    mov rax, 1                      ; 1 - номер системного вызова функции write
+    mov rdi, 1                      ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, messegCalcEnterNum1       ; вывод сообщения "Подтверждение выбора режима разворота строки "
+    mov rdx, 58                     ; длина строки    syscall
+    syscall
+
+    call printEnter                ; вызов функции вывода "ENTER"
+
+    mov rax, 1                      ; 1 - номер системного вызова функции write
+    mov rdi, 1                      ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, messegCalcEnterNum2       ; вывод сообщения "Подтверждение выбора режима разворота строки "
+    mov rdx, 40                     ; длина строки
+    syscall
+
+
+
+
+    call printEnter                ; вызов функции вывода "ENTER"
+
+
+
+    call StartEnterNumA                ; переход к функции ввода строки
+
+ret
+
+
+StartEnterNumA:
+    call printEnter                ; вызов функции вывода "ENTER"
+    mov rax, 1                      ; 1 - номер системного вызова функции write
+    mov rdi, 1                      ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, messegStartEnterNumA       ; вывод сообщения "Подтверждение выбора режима разворота строки "
+    mov rdx, 11                     ; длина строки
+    syscall
+    call printEnter                ; вызов функции вывода "ENTER"
+
+    mov rax, 0
+    mov [count], rax
+    mov rsi, readNumA             ; в rsi записываем адрес для хранения первого символа ввода
+    
+
+    call EnterNumA
+ret
+
+EnterNumA:
+
+; ждем ввода символа
+    mov rax, 0                     ; 0 - номер системного вызова функции read
+    mov rdi, 0                     ; 0 - дескриптор файла стандартного вызова stdout
+    mov rdx, 1                     ; количество байтов
+    syscall     
+
+; вывод введеного символа
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    ; в rsi ничего не пишем т.к. там хронится адрес переменой с введенным символом 
+    mov rdx, 1                     ; выводим 1 байт
+    syscall
+    
+
+    mov rax, [count]
+    add rax, 48
+    mov [count], rax
+
+; вывод введеного символа
+  ;  mov rax, 1                     ; 1 - номер системного вызова функции write
+  ;  mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+  ;  mov rsi, count ; в rsi ничего не пишем т.к. там хронится адрес переменой с введенным символом 
+  ;  mov rdx, 1                     ; выводим 1 байт
+  ;  syscall
+    
+
+    mov rax, [count]
+    sub rax, 48
+    mov [count], rax
+
+
+    mov rsi, readNumA            ; запись в rsi адреса первого символа
+
+    ; вычисляем адрес следующего байта для ввода
+    mov rax, [count]               
+    mov rax, [readNumA  + rax]
+
+
+
+
+    ; првоерка, совпадения введеного символа с символом окончания строки
+    mov rbx, '/'
+ ;   mov rbx, tempData
+    cmp  rbx, rax
+    je StartEnterNumB              ; переход к функции разворота строки
+ ;   jmp enterString
+
+         ; прверка превышени ялимита ввода 
+    mov rbx, '9'                     ; 
+  ;  mov rax, [count]                ; сравниваем с счетчиком
+    cmp  rax, rbx                   ; сравнение
+    jge PrintErrNum              ; переход к функции разворота строки
+
+
+    ; прверка превышени ялимита ввода 
+    mov rbx, 5                     ; лимит ввода (20 - для првоерки) далее сделать 100
+    mov rax, [count]                ; сравниваем с счетчиком
+    cmp  rbx, rax                   ; сравнение
+    je StartEnterNumB             ; переход к функции разворота строки
+
+
+
+    mov rax, [count]
+    add rax, 1
+    mov [count], rax
+
+    add rsi,[count]
+    call EnterNumA
+
+ret
+
+
+PrintErrNum:
+
+    call printEnter     
+    call printEnter
+    call printEnter                ; вызов функции вывода "ENTER"
+
+    mov rax, 1                      ; 1 - номер системного вызова функции write
+    mov rdi, 1                      ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, massegErrNum       ; вывод сообщения "Подтверждение выбора режима разворота строки "
+    mov rdx, 37                     ; длина строки
+    syscall
+    call printEnter                ; вызов функции вывода "ENTER"
+    call enterStringForCalculator
+ret
+
+
+StartEnterNumB:
+
+
+    call printEnter                ; вызов функции вывода "ENTER"
+    mov rax, 1                      ; 1 - номер системного вызова функции write
+    mov rdi, 1                      ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, messegStartEnterNumB       ; вывод сообщения "Подтверждение выбора режима разворота строки "
+    mov rdx, 11                     ; длина строки
+    syscall
+    call printEnter                ; вызов функции вывода "ENTER"
+
+    mov rax, 0
+    mov [count], rax
+    mov rsi, readNumB             ; в rsi записываем адрес для хранения первого символа ввода
+    
+    call EnterNumB
+
+ret
+
+EnterNumB:
+
+; ждем ввода символа
+    mov rax, 0                     ; 0 - номер системного вызова функции read
+    mov rdi, 0                     ; 0 - дескриптор файла стандартного вызова stdout
+    mov rdx, 1                     ; количество байтов
+    syscall     
+
+; вывод введеного символа
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    ; в rsi ничего не пишем т.к. там хронится адрес переменой с введенным символом 
+    mov rdx, 1                     ; выводим 1 байт
+    syscall
+    
+
+
+
+; вывод введеного символа
+  ;  mov rax, 1                     ; 1 - номер системного вызова функции write
+  ;  mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+  ;  mov rsi, count ; в rsi ничего не пишем т.к. там хронится адрес переменой с введенным символом 
+  ;  mov rdx, 1                     ; выводим 1 байт
+  ;  syscall
+    
+
+
+
+    mov rsi, readNumB            ; запись в rsi адреса первого символа
+
+    ; вычисляем адрес следующего байта для ввода
+    mov rax, [count]               
+    mov rax, [readNumB  + rax]
+
+
+
+
+    ; првоерка, совпадения введеного символа с символом окончания строки
+    mov rbx, '/'
+ ;   mov rbx, tempData
+    cmp  rbx, rax
+    je StartSum              ; переход к функции разворота строки
+ ;   jmp enterString
+
+         ; прверка превышени ялимита ввода 
+    mov rbx, 100                     ; 
+    mov rax, [count]                ; сравниваем с счетчиком
+    cmp  rax, rbx                   ; сравнение
+    jge PrintErrNum              ; переход к функции разворота строки
+
+
+    ; прверка превышени ялимита ввода 
+    mov rbx, 4                     ; лимит ввода (20 - для првоерки) далее сделать 100
+    mov rax, [count]                ; сравниваем с счетчиком
+    cmp  rbx, rax                   ; сравнение
+    je StartSum             ; переход к функции разворота строки
+
+
+
+    mov rax, [count]
+    add rax, 1
+    mov [count], rax
+
+    add rsi,[count]
+    call EnterNumB
+
+ret
+
+StartSum:
+
+    mov rax, readNumA
+    mov rcx, 10000
+    mul rcx
+    mov [numA], rax
+
+    mov rax, readNumB
+    mul rcx
+    mov [numB], rax
+
+
+    mov rax, readNumA
+    mov rcx, 1000
+    mul rcx
+    add [numA], rax
+
+    mov rax, readNumB
+    mul rcx
+    add [numB], rax
+
+    mov rax, readNumA
+    mov rcx, 100
+    mul rcx
+    add [numA], rax
+
+    mov rax, readNumB
+    mul rcx
+    add [numB], rax
+
+    mov rax, readNumA
+    mov rcx, 10
+    mul rcx
+    add [numA], rax
+
+    mov rax, readNumB
+    mul rcx
+    add [numB], rax
+
+    mov rax, readNumA
+    mov rcx, 1
+    mul rcx
+    add [numA], rax
+
+    mov rax, readNumB
+    mul rcx
+    add [numB], rax
+
+    mov rax, [numA]
+    add [numB], rax
+
+    mov rax, [numA]
+    mov rcx, 10000
+    div rcx
+
+
+
+ ;  mov rax, 38
+ ;  mov rcx, 5
+ ;  div rcx
+
+ ;   add rdx, 48
+ ;   mov [countA], rdx
+
+    add rax, 48
+    mov [countA], rax
+
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, countA ; в rsi ничего не пишем т.к. там хронится адрес переменой с введенным символом 
+    mov rdx, 1                     ; выводим 1 байт
+    syscall
+
+
+ret
+
+
+
+
+
+
+ SelectFlipString:
+
+    mov rax, 1                      ; 1 - номер системного вызова функции write
+    mov rdi, 1                      ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, messegSelectFlip       ; вывод сообщения "Подтверждение выбора режима разворота строки "
+    mov rdx, 48                     ; длина строки
+    syscall
+
+    mov rax, 0                     ; 0 - номер системного вызова функции read
+    mov rdi, 0                     ; 0 - дескриптор файла стандартного вызова stdout
+    mov rsi, readMesseg            ; адрес строки для вывод
+    mov rdx, 1                     ; количество считываемых байтов
+    syscall 
+
+    call printEnter                 ; вызов функции
+    
+    ; Если ввели символ Y –Yes значит переходим к функции разворота стоки
+    mov rax, 'Y'                    ; 
+    mov rbx, [readMesseg]           ; передаем введеный символ
+    cmp rax, rbx                    ; сравниваем символы
+    je enterStringForFlip           ; переход к развороту строки при совпадении
+    jmp selectMode                  ; иначе переход к выбору режима 
+
+ret
+
+
+printEnter :                ; вызов функции
+
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, prEnter                ; адрес строки для вывод
+    mov rdx, 1                      ; количество байтов
+    syscall                        ; выполняем системный вызов write
+ret
+
+; вывод ограничений для разворачеваемой строки
+enterStringForFlip:
+
+    call printEnter
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, massegRulsEnterStr1 ; адрес строки для вывод
+    mov rdx, 17                ; количество байтов
+    syscall    
+    call printEnter
+
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, massegRulsEnterStr2 ; адрес строки для вывод
+    mov rdx, 35                ; количество байтов
+    syscall
+    call printEnter
+
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    mov rsi, massegRulsEnterStr3 ; адрес строки для выво
+    mov rdx, 41                ; количество байтов
+    syscall
+
+    call printEnter
+    call printEnter
+
+    mov rsi, readMesseg             ; в rsi записываем адрес для хранения первого символа ввода
+
+    call enterString                ; переход к функции ввода строки
+
+ret
+
+enterString:
+
+; ждем ввода символа
+    mov rax, 0                     ; 0 - номер системного вызова функции read
+    mov rdi, 0                     ; 0 - дескриптор файла стандартного вызова stdout
+    mov rdx, 1                     ; количество байтов
+    syscall     
+
+; вывод введеного символа
+    mov rax, 1                     ; 1 - номер системного вызова функции write
+    mov rdi, 1                     ; 1 - дескриптор файла стандартного вызова stdout
+    ; в rsi ничего не пишем т.к. там хронится адрес переменой с введенным символом 
+    mov rdx, 1                     ; выводим 1 байт
+    syscall
+    
+    mov rsi, readMesseg            ; запись в rsi адреса первого символа
+
+    ; вычисляем адрес следующего байта для ввода
+    mov rax, [count]               
+    mov rax, [readMesseg  + rax]
+
+    ; првоерка, совпадения введеного символа с символом окончания строки
+    mov rbx, '/'
+ ;   mov rbx, tempData
+    cmp  rbx, rax
+    je StartFlipString              ; переход к функции разворота строки
+ ;   jmp enterString
+
+    ; прверка превышени ялимита ввода 
+    mov rbx, 20                     ; лимит ввода (20 - для првоерки) далее сделать 100
+    mov rax, [count]                ; сравниваем с счетчиком
+    cmp  rbx, rax                   ; сравнение
+    je StartFlipString              ; переход к функции разворота строки
+
+    mov rax, [count]
+    add rax, 1
+    mov [count], rax
+
+    add rsi,[count]
+    call enterString
+
+ret
+
+; функция начала разворота строки ()
+; вывод 2х энтеров
+; переход к концу массива для дольнешего инкримента
+StartFlipString:
+    ; вывод двух энтеров
+    call printEnter     
+    call printEnter
+ 
+    ; в rsi укладываем начало строки
+    mov rsi, readMesseg
+    ; добовляем к началу строки число введеных симовлов
+    add rsi,[count]
+
+    call FlipString
+ret
+
+FlipString:
+
+    ; вывод одного символа
+    mov rax, 1  
+    mov rdi, 1
+    mov rdx, 1
+    syscall
+ 
+
+    ; сравнение текущего значения счетчика с 0ем
+    mov rbx, 0          ; число для сравнения 0
+    mov rax, [count]    ; значение счетчика в RAX
+    cmp  rbx, rax       ;
+    je selectMode  ;  счетчик совпал переходим к выбору режима
+
+
+
+    ; инкриментируем счетчик
+    mov rax, [count]    
+    sub rax, 1
+    mov [count], rax
+    ; инкриментируем RSI
+    sub rsi,1
+
+    call FlipString     ; счетчик не 0, значит выводим еще символы 
+ret
