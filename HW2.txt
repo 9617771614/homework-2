@@ -363,40 +363,48 @@ ret
 StartSum:
 
     mov rax, readNumA
+    sub rax, 48
     mov rcx, 10000
     mul rcx
     mov [numA], rax
 
     mov rax, readNumB
+    sub rax, 48
     mul rcx
     mov [numB], rax
 
 
     mov rax, readNumA
+    sub rax, 48
     mov rcx, 1000
     mul rcx
     add [numA], rax
 
     mov rax, readNumB
+    sub rax, 48
     mul rcx
     add [numB], rax
 
     mov rax, readNumA
+    sub rax, 48
     mov rcx, 100
     mul rcx
     add [numA], rax
 
     mov rax, readNumB
+    sub rax, 48
     mul rcx
     add [numB], rax
 
     mov rax, readNumA
+    sub rax, 48
     mov rcx, 10
     mul rcx
     add [numA], rax
 
     mov rax, readNumB
-    mul rcx
+    sub rax, 48
+    mul rcx, 1
     add [numB], rax
 
     mov rax, readNumA
@@ -593,4 +601,5 @@ FlipString:
     sub rsi,1
 
     call FlipString     ; счетчик не 0, значит выводим еще символы 
+
 ret
